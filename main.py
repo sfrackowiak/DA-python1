@@ -31,6 +31,27 @@ def method():
     return {"method": "GET"}
 
 
+@app.post("/method")
+def method(response: Response):
+    response.status_code = status.HTTP_201_CREATED
+    return {"method": "POST"}
+
+
+@app.delete("/method")
+def method():
+    return {"method": "DELETE"}
+
+
+@app.put("/method")
+def method():
+    return {"method": "PUT"}
+
+
+@app.options("/method")
+def method():
+    return {"method": "OPTIONS"}
+
+
 @app.get("/auth")
 def auth(password: str, password_hash: str, response: Response):
     hashed = hashlib.sha512(password.encode('utf-8'))
