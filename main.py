@@ -66,7 +66,7 @@ def auth(response: Response, password: str = None, password_hash: str = None):
 
 @app.post("/register", response_model=UserOut)
 def register(info: UserIn, response: Response):
-    to_add = len(info.name.strip()) + len(info.surname.strip())
+    to_add = sum(c.isalpha() for c in info.name) + sum(c.isalpha() for c in info.surname)
     reg_date = datetime.today().strftime('%Y-%m-%d')
     vac_date = (datetime.today() + timedelta(days=to_add)).strftime('%Y-%m-%d')
     user = {"id": app.id, "name": info.name, "surname": info.surname, "register_date": reg_date, "vaccination_date": vac_date}
