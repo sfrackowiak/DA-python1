@@ -54,7 +54,7 @@ def method():
 
 @app.get("/auth")
 def auth(response: Response, password: str = None, password_hash: str = None):
-    if password is None or password_hash is None:
+    if password is None or password_hash is None or password == '' or password_hash == '':
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     hashed = hashlib.sha512(password.encode('utf-8'))
