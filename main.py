@@ -53,7 +53,10 @@ def method():
 
 
 @app.get("/auth")
-def auth(password: str, password_hash: str, response: Response):
+def auth(response: Response, password: str = None, password_hash: str = None):
+    if password is None or password_hash is None:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
     hashed = hashlib.sha512(password.encode('utf-8'))
     if password_hash == hashed.hexdigest():
         response.status_code = status.HTTP_204_NO_CONTENT
@@ -74,7 +77,7 @@ def register(info: UserIn, response: Response):
 
 
 @app.get("/patient/{patient_id}", response_model=UserOut)
-def auth(patient_id: int, response: Response):
+def auth_patient(patient_id: int, response: Response):
     if patient_id < 1:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return
