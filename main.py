@@ -70,7 +70,7 @@ def login_session(response: Response, credentials: HTTPBasicCredentials = Depend
 def welcome_session(request: Request, response: Response, session_token: str = Cookie(None), format: str = None):
     if session_token not in app.access_tokens:
         response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
+        return "401+"
     if format is None:
         return "Welcome!"
     if format == "json":
@@ -82,7 +82,7 @@ def welcome_session(request: Request, response: Response, session_token: str = C
 def welcome_token(request: Request, response: Response, token: str = None, format: str = None):
     if token not in app.access_tokens:
         response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
+        return "401"
     if format is None:
         return "Welcome!"
     if format == "json":
