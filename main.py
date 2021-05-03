@@ -1,13 +1,18 @@
 import hashlib
+import secrets
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Response, status, Request
+from fastapi import FastAPI, Response, status, Request, Depends
 from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 app = FastAPI()
 app.id = 1
 app.patients = {}
 templates = Jinja2Templates(directory="templates")
+security = HTTPBasic()
+app.secret_key = "dosyc krotki sekretny kluczyk"
+app.access_tokens = []
 
 
 class UserIn(BaseModel):
@@ -26,6 +31,38 @@ class UserOut(BaseModel):
 @app.get("/hello")
 def hello(request: Request):
     return templates.TemplateResponse("hello.html", {"request": request, "today_date": datetime.today().strftime('%Y-%m-%d')})
+
+
+def correct_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_login = secrets.compare_digest(credentials.username, "4dm1n")
+    correct_password = secrets.compare_digest(credentials.password, "NotSoSecurePa$$")
+    if not (correct_login and correct_password):
+        return False
+    return True
+
+
+@app.post("/login_session")
+def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+    response.status_code = status.HTTP_201_CREATED
+    if not (correct_credentials(credentials)):
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
+    session_token = hashlib.sha256(f"{app.secret_key}".encode()).hexdigest()
+    app.access_tokens.append(session_token)
+    response.set_cookie(key="session_token", value=session_token)
+    return
+
+
+@app.post("/login_token")
+def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+    response.status_code = status.HTTP_201_CREATED
+    if not (correct_credentials(credentials)):
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
+    session_token = hashlib.sha256(f"{app.secret_key}".encode()).hexdigest()
+    app.access_tokens.append(session_token)
+    response.set_cookie(key="session_token", value=session_token)
+    return {"token": session_token}
 
 
 @app.get("/")
