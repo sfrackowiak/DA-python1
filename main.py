@@ -1,11 +1,13 @@
 import hashlib
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response, status, Request
 from pydantic import BaseModel
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 app.id = 1
 app.patients = {}
+templates = Jinja2Templates(directory="templates")
 
 
 class UserIn(BaseModel):
@@ -21,35 +23,26 @@ class UserOut(BaseModel):
     vaccination_date: str
 
 
+@app.get("/hello")
+def hello():
+    return templates.TemplateResponse("hello.html", {"today_date": datetime.today().strftime('%Y-%m-%d')})
+
+
 @app.get("/")
 def root():
     return {"message": "Hello world!"}
 
 
-@app.get("/method")
-def method():
-    return {"method": "GET"}
+@app.api_route(
+    path="/method", methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"], status_code=200
+)
+def read_request(request: Request, response: Response):
+    request_method = request.method
 
+    if request_method == "POST":
+        response.status_code = status.HTTP_201_CREATED
 
-@app.post("/method")
-def method(response: Response):
-    response.status_code = status.HTTP_201_CREATED
-    return {"method": "POST"}
-
-
-@app.delete("/method")
-def method():
-    return {"method": "DELETE"}
-
-
-@app.put("/method")
-def method():
-    return {"method": "PUT"}
-
-
-@app.options("/method")
-def method():
-    return {"method": "OPTIONS"}
+    return {"method": request_method}
 
 
 @app.get("/auth")
