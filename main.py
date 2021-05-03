@@ -24,8 +24,8 @@ class UserOut(BaseModel):
 
 
 @app.get("/hello")
-def hello():
-    return templates.TemplateResponse("hello.html", {"today_date": datetime.today().strftime('%Y-%m-%d')})
+def hello(request: Request):
+    return templates.TemplateResponse("hello.html", {"request": request, "today_date": datetime.today().strftime('%Y-%m-%d')})
 
 
 @app.get("/")
