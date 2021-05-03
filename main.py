@@ -1,7 +1,7 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Response, status, Request, Depends
+from fastapi import FastAPI, Response, status, Request, Depends, Cookie, HTTPException
 from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -63,6 +63,30 @@ def login_session(response: Response, credentials: HTTPBasicCredentials = Depend
     app.access_tokens.append(session_token)
     response.set_cookie(key="session_token", value=session_token)
     return {"token": session_token}
+
+
+@app.get("/welcome_session")
+def welcome_session(request: Request, response: Response, session_token: str = Cookie(None), format: str = None):
+    if session_token not in app.access_tokens:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
+    if format is None:
+        return "Welcome!"
+    if format == "json":
+        return {"message": "Welcome!"}
+    return templates.TemplateResponse("welcome.html", {"request": request})
+
+
+@app.get("/welcome_token")
+def welcome_token(request: Request, response: Response, token: str = None, format: str = None):
+    if token not in app.access_tokens:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
+    if format is None:
+        return "Welcome!"
+    if format == "json":
+        return {"message": "Welcome!"}
+    return templates.TemplateResponse("welcome.html", {"request": request})
 
 
 @app.get("/")
