@@ -32,7 +32,8 @@ class UserOut(BaseModel):
 
 @app.get("/hello")
 def hello(request: Request):
-    return templates.TemplateResponse("hello.html", {"request": request, "today_date": datetime.today().strftime('%Y-%m-%d')})
+    return templates.TemplateResponse("hello.html",
+                                      {"request": request, "today_date": datetime.today().strftime('%Y-%m-%d')})
 
 
 def correct_credentials(credentials: HTTPBasicCredentials = Depends(security)):
@@ -100,14 +101,16 @@ def logged_out(request: Request, format: str = None):
     return PlainTextResponse("Logged out!")
 
 
-
 @app.delete("/logout_session")
 def logout_session(response: Response, session_token: str = Cookie(None), format: str = None):
     if session_token not in app.access_tokens:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     app.access_tokens.clear()
-    return RedirectResponse(url="/logged_out", status_code=302, headers={"format": format})
+    url = "/logged_out"
+    if format:
+        url += "?format=" + format
+    return RedirectResponse(url=url, status_code=302)
 
 
 @app.delete("/logout_token")
@@ -116,7 +119,10 @@ def logout_token(response: Response, token: str = None, format: str = None):
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     app.access_tokens.clear()
-    return RedirectResponse(url="/logged_out", status_code=302, headers={"format": format})
+    url = "/logged_out"
+    if format:
+        url += "?format=" + format
+    return RedirectResponse(url=url, status_code=302)
 
 
 @app.get("/")
@@ -153,7 +159,8 @@ def register(info: UserIn, response: Response):
     to_add = sum(c.isalpha() for c in info.name) + sum(c.isalpha() for c in info.surname)
     reg_date = datetime.today().strftime('%Y-%m-%d')
     vac_date = (datetime.today() + timedelta(days=to_add)).strftime('%Y-%m-%d')
-    user = {"id": app.id, "name": info.name, "surname": info.surname, "register_date": reg_date, "vaccination_date": vac_date}
+    user = {"id": app.id, "name": info.name, "surname": info.surname, "register_date": reg_date,
+            "vaccination_date": vac_date}
     app.patients[app.id] = user
     app.id += 1
     response.status_code = status.HTTP_201_CREATED
