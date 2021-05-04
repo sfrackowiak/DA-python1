@@ -14,7 +14,9 @@ app.patients = {}
 templates = Jinja2Templates(directory="templates")
 security = HTTPBasic()
 app.secret_key = "dosyc krotki sekretny kluczyk"
+app.number = 0
 app.access_tokens = []
+app.access_cookies = []
 
 
 class UserIn(BaseModel):
@@ -50,19 +52,25 @@ def login_session(response: Response, credentials: HTTPBasicCredentials = Depend
     if not (correct_credentials(credentials)):
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
-    session_token = hashlib.sha256(f"{app.secret_key}".encode()).hexdigest()
-    app.access_tokens.append(session_token)
+    session_token = hashlib.sha256((f"{app.secret_key}"+str(app.number)).encode()).hexdigest()
+    app.number += 1
+    if len(app.access_cookies) >= 3:
+        app.access_cookies.pop(0)
+    app.access_cookies.append(session_token)
     response.set_cookie(key="session_token", value=session_token)
     return
 
 
 @app.post("/login_token")
-def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+def login_token(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
     response.status_code = status.HTTP_201_CREATED
     if not (correct_credentials(credentials)):
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
-    session_token = hashlib.sha256(f"{app.secret_key}".encode()).hexdigest()
+    session_token = hashlib.sha256((f"{app.secret_key}" + str(app.number)).encode()).hexdigest()
+    app.number += 1
+    if len(app.access_tokens) >= 3:
+        app.access_tokens.pop(0)
     app.access_tokens.append(session_token)
     response.set_cookie(key="session_token", value=session_token)
     return {"token": session_token}
@@ -70,7 +78,7 @@ def login_session(response: Response, credentials: HTTPBasicCredentials = Depend
 
 @app.get("/welcome_session")
 def welcome_session(request: Request, response: Response, session_token: str = Cookie(None), format: str = None):
-    if session_token not in app.access_tokens:
+    if session_token not in app.access_cookies:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     if format is None:
@@ -103,10 +111,10 @@ def logged_out(request: Request, format: str = None):
 
 @app.delete("/logout_session")
 def logout_session(response: Response, session_token: str = Cookie(None), format: str = None):
-    if session_token not in app.access_tokens:
+    if session_token not in app.access_cookies:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
-    app.access_tokens.remove(session_token)
+    app.access_cookies.remove(session_token)
     url = "/logged_out"
     if format:
         url += "?format=" + format
