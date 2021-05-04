@@ -107,8 +107,7 @@ def logout_session(request: Request, response: Response, session_token: str = Co
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     app.access_tokens.clear()
-    response.status_code = status.HTTP_302_FOUND
-    return RedirectResponse("/logged_out", status_code=302, headers={format: format})
+    return RedirectResponse(app.url_path_for("logged_out"), status_code=302, headers={format: format})
 
 
 @app.delete("/logout_token")
@@ -117,7 +116,6 @@ def logout_token(request: Request, response: Response, token: str = None, format
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     app.access_tokens.clear()
-    response.status_code = status.HTTP_302_FOUND
     return RedirectResponse(app.url_path_for("logged_out"), status_code=302, headers={format: format})
 
 
