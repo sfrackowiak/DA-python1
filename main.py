@@ -92,7 +92,7 @@ def welcome_token(request: Request, response: Response, token: str = None, forma
 
 
 @app.get("/logged_out")
-def logged_out(request: Request, response: Response, format: str = None):
+def logged_out(request: Request, format: str = None):
     if format == "json":
         return {"message": "Logged out!"}
     if format == "html":
@@ -102,21 +102,21 @@ def logged_out(request: Request, response: Response, format: str = None):
 
 
 @app.delete("/logout_session")
-def logout_session(request: Request, response: Response, session_token: str = Cookie(None), format: str = None):
+def logout_session(response: Response, session_token: str = Cookie(None), format: str = None):
     if session_token not in app.access_tokens:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     app.access_tokens.clear()
-    return RedirectResponse(app.url_path_for("logged_out"), status_code=302, headers={format: format})
+    return RedirectResponse(app.url_path_for("logged_out"), status_code=302, headers={"format": format})
 
 
 @app.delete("/logout_token")
-def logout_token(request: Request, response: Response, token: str = None, format: str = None):
+def logout_token(response: Response, token: str = None, format: str = None):
     if token not in app.access_tokens:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
     app.access_tokens.clear()
-    return RedirectResponse(app.url_path_for("logged_out"), status_code=302, headers={format: format})
+    return RedirectResponse(app.url_path_for("logged_out"), status_code=302, headers={"format": format})
 
 
 @app.get("/")
