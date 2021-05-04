@@ -106,7 +106,7 @@ def logout_session(response: Response, session_token: str = Cookie(None), format
     if session_token not in app.access_tokens:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
-    app.access_tokens.clear()
+    app.access_tokens.remove(session_token)
     url = "/logged_out"
     if format:
         url += "?format=" + format
@@ -118,7 +118,7 @@ def logout_token(response: Response, token: str = None, format: str = None):
     if token not in app.access_tokens:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return
-    app.access_tokens.clear()
+    app.access_tokens.remove(token)
     url = "/logged_out"
     if format:
         url += "?format=" + format
