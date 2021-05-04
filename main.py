@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import PlainTextResponse
+from fastapi.responses import RedirectResponse
 
 app = FastAPI()
 app.id = 1
@@ -88,6 +89,36 @@ def welcome_token(request: Request, response: Response, token: str = None, forma
     if format == "json":
         return {"message": "Welcome!"}
     return templates.TemplateResponse("welcome.html", {"request": request})
+
+
+@app.get("/logged_out")
+def logged_out(request: Request, response: Response, format: str = None):
+    if format == "json":
+        return {"message": "Logged out!"}
+    if format == "html":
+        return templates.TemplateResponse("logged_out.html", {"request": request})
+    return PlainTextResponse("Logged out!")
+
+
+
+@app.delete("/logout_session")
+def logout_session(request: Request, response: Response, session_token: str = Cookie(None), format: str = None):
+    if session_token not in app.access_tokens:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
+    app.access_tokens.clear()
+    response.status_code = status.HTTP_302_FOUND
+    return RedirectResponse("/logged_out", status_code=302, headers={format: format})
+
+
+@app.delete("/logout_token")
+def logout_token(request: Request, response: Response, token: str = None, format: str = None):
+    if token not in app.access_tokens:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return
+    app.access_tokens.clear()
+    response.status_code = status.HTTP_302_FOUND
+    return RedirectResponse(app.url_path_for("logged_out"), status_code=302, headers={format: format})
 
 
 @app.get("/")
