@@ -28,9 +28,9 @@ async def customers():
     customers = app.db_connection.execute(
         "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
     for x in customers:
-        for y in x:
-            if customers[y] is None:
-                customers[y] = ""
+        for key in x:
+            if x[key] is None:
+                x[key] = ""
     return \
         {
             "customers": [
