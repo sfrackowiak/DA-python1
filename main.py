@@ -26,7 +26,7 @@ async def categories():
 @app.get("/customers")
 async def customers():
     customers = app.db_connection.execute(
-        "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
+        "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY UPPER(CustomerID)").fetchall()
     customers_list = []
     for x in customers:
         customer_addr = ""
