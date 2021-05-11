@@ -80,7 +80,7 @@ async def employees(limit: int, offset: int, order: str):
 
     return \
         {
-            "products_extended":
+            "employees":
                 [
                     {
                         "id": x['EmployeeID'],
