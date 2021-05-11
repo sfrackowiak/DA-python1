@@ -60,19 +60,19 @@ async def products(product_id: int):
 
 @app.get("/employees")
 async def employees(limit: int = None, offset: int = None, order: str = None):
-    if order is not None and order not in ["first_name", "last_name", "city"]:
+    if order not in ["first_name", "last_name", "city", None]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
     if order == "first_name":
         order = "FirstName"
     elif order == "last_name":
         order = "LastName"
-    else:
+    elif order == "city":
         order = "City"
+    else:
+        order = "EmployeeID"
 
-    query = f"SELECT EmployeeID, LastName, FirstName, City FROM Employees"
-    if order is not None:
-        query += f" ORDER BY {order}"
+    query = f"SELECT EmployeeID, LastName, FirstName, City FROM Employees ORDER BY {order}"
     if limit is not None:
         query += f" LIMIT {limit}"
     if offset is not None:
