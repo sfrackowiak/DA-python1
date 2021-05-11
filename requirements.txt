@@ -34,3 +34,6 @@ uvicorn==0.13.4
 uvloop==0.15.2
 watchgod==0.7
 websockets==8.1
+
+aiosqlite~=0.17.0
+pytest~=6.2.3

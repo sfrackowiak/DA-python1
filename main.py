@@ -1,186 +1,38 @@
-import hashlib
-import secrets
-from datetime import datetime, timedelta
-from fastapi import FastAPI, Response, status, Request, Depends, Cookie, HTTPException
-from pydantic import BaseModel
-from fastapi.templating import Jinja2Templates
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.responses import PlainTextResponse
-from fastapi.responses import RedirectResponse
+import aiosqlite
+from fastapi import FastAPI
 
 app = FastAPI()
-app.id = 1
-app.patients = {}
-templates = Jinja2Templates(directory="templates")
-security = HTTPBasic()
-app.secret_key = "dosyc krotki sekretny kluczyk"
-app.number = 0
-app.access_tokens = []
-app.access_cookies = []
 
 
-class UserIn(BaseModel):
-    name: str
-    surname: str
+@app.on_event("startup")
+async def startup():
+    app.db_connection = await aiosqlite.connect("northwind.db")
+    app.db_connection.text_factory = lambda b: b.decode(errors="ignore")  # northwind specific
 
 
-class UserOut(BaseModel):
-    id: int
-    name: str
-    surname: str
-    register_date: str
-    vaccination_date: str
+@app.on_event("shutdown")
+async def shutdown():
+    await app.db_connection.close()
 
 
-@app.get("/hello")
-def hello(request: Request):
-    return templates.TemplateResponse("hello.html",
-                                      {"request": request, "today_date": datetime.today().strftime('%Y-%m-%d')})
+@app.get("/categories")
+async def categories():
+    categories = app.db_connection.execute(
+        "SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryID").fetchall()
+    return {"categories": [{"id": x['CategoryID'], "name": x['CategoryName']} for x in categories]}
 
 
-def correct_credentials(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_login = secrets.compare_digest(credentials.username, "4dm1n")
-    correct_password = secrets.compare_digest(credentials.password, "NotSoSecurePa$$")
-    if not (correct_login and correct_password):
-        return False
-    return True
-
-
-@app.post("/login_session")
-def login_session(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
-    response.status_code = status.HTTP_201_CREATED
-    if not (correct_credentials(credentials)):
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
-    session_token = hashlib.sha256((f"{app.secret_key}"+str(app.number)).encode()).hexdigest()
-    app.number += 1
-    if len(app.access_cookies) >= 3:
-        app.access_cookies.pop(0)
-    app.access_cookies.append(session_token)
-    response.set_cookie(key="session_token", value=session_token)
-    return
-
-
-@app.post("/login_token")
-def login_token(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
-    response.status_code = status.HTTP_201_CREATED
-    if not (correct_credentials(credentials)):
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
-    session_token = hashlib.sha256((f"{app.secret_key}" + str(app.number)).encode()).hexdigest()
-    app.number += 1
-    if len(app.access_tokens) >= 3:
-        app.access_tokens.pop(0)
-    app.access_tokens.append(session_token)
-    response.set_cookie(key="session_token", value=session_token)
-    return {"token": session_token}
-
-
-@app.get("/welcome_session")
-def welcome_session(request: Request, response: Response, session_token: str = Cookie(None), format: str = None):
-    if session_token not in app.access_cookies:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
-    if format is None:
-        return PlainTextResponse("Welcome!")
-    if format == "json":
-        return {"message": "Welcome!"}
-    return templates.TemplateResponse("welcome.html", {"request": request})
-
-
-@app.get("/welcome_token")
-def welcome_token(request: Request, response: Response, token: str = None, format: str = None):
-    if token not in app.access_tokens:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
-    if format is None:
-        return PlainTextResponse("Welcome!")
-    if format == "json":
-        return {"message": "Welcome!"}
-    return templates.TemplateResponse("welcome.html", {"request": request})
-
-
-@app.get("/logged_out")
-def logged_out(request: Request, format: str = None):
-    if format == "json":
-        return {"message": "Logged out!"}
-    if format == "html":
-        return templates.TemplateResponse("logged_out.html", {"request": request})
-    return PlainTextResponse("Logged out!")
-
-
-@app.delete("/logout_session")
-def logout_session(response: Response, session_token: str = Cookie(None), format: str = None):
-    if session_token not in app.access_cookies:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
-    app.access_cookies.remove(session_token)
-    url = "/logged_out"
-    if format:
-        url += "?format=" + format
-    return RedirectResponse(url=url, status_code=302)
-
-
-@app.delete("/logout_token")
-def logout_token(response: Response, token: str = None, format: str = None):
-    if token not in app.access_tokens:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
-    app.access_tokens.remove(token)
-    url = "/logged_out"
-    if format:
-        url += "?format=" + format
-    return RedirectResponse(url=url, status_code=302)
-
-
-@app.get("/")
-def root():
-    return {"message": "Hello world!"}
-
-
-@app.api_route(
-    path="/method", methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"], status_code=200
-)
-def read_request(request: Request, response: Response):
-    request_method = request.method
-
-    if request_method == "POST":
-        response.status_code = status.HTTP_201_CREATED
-
-    return {"method": request_method}
-
-
-@app.get("/auth")
-def auth(response: Response, password: str = None, password_hash: str = None):
-    if password is None or password_hash is None or password == '' or password_hash == '':
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return
-    hashed = hashlib.sha512(password.encode('utf-8'))
-    if password_hash == hashed.hexdigest():
-        response.status_code = status.HTTP_204_NO_CONTENT
-    else:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-
-
-@app.post("/register", response_model=UserOut)
-def register(info: UserIn, response: Response):
-    to_add = sum(c.isalpha() for c in info.name) + sum(c.isalpha() for c in info.surname)
-    reg_date = datetime.today().strftime('%Y-%m-%d')
-    vac_date = (datetime.today() + timedelta(days=to_add)).strftime('%Y-%m-%d')
-    user = {"id": app.id, "name": info.name, "surname": info.surname, "register_date": reg_date,
-            "vaccination_date": vac_date}
-    app.patients[app.id] = user
-    app.id += 1
-    response.status_code = status.HTTP_201_CREATED
-    return user
-
-
-@app.get("/patient/{patient_id}", response_model=UserOut)
-def auth_patient(patient_id: int, response: Response):
-    if patient_id < 1:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return
-    if patient_id not in app.patients:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return
-    return app.patients[patient_id]
+@app.get("/customers")
+async def customers():
+    customers = app.db_connection.execute(
+        "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
+    return \
+        {
+            "customers": [
+                {
+                    "id": x['CustomerID'],
+                    "name": x['CompanyName'],
+                    "full_address": f"{x['Address']} {x['PostalCode']} {x['City']} {x['Country']}",
+                }
+                for x in customers]
+        }
