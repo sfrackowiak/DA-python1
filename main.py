@@ -37,7 +37,7 @@ async def customers():
         if x['City'] is not None:
             customer_addr += x['City'] + " "
         if x['Country'] is not None:
-            customer_addr += x['Country']
+            customer_addr += x['Country'] + " "
         customer = {"id": x['CustomerID'], "name": x['CompanyName'], "full_address": customer_addr}
         customers_list.append(customer)
 
