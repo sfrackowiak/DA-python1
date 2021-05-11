@@ -1,4 +1,4 @@
-import aiosqlite
+import sqlite3
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -6,27 +6,25 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup():
-    app.db_connection = await aiosqlite.connect("northwind.db")
+    app.db_connection = sqlite3.connect("northwind.db")
     app.db_connection.text_factory = lambda b: b.decode(errors="ignore")  # northwind specific
 
 
 @app.on_event("shutdown")
 async def shutdown():
-    await app.db_connection.close()
+    app.db_connection.close()
 
 
 @app.get("/categories")
 async def categories():
-    cursor = app.db_connection.cursor()
-    categories = cursor.execute(
+    categories = app.db_connection.execute(
         "SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryID").fetchall()
     return {"categories": [{"id": x['CategoryID'], "name": x['CategoryName']} for x in categories]}
 
 
 @app.get("/customers")
 async def customers():
-    cursor = app.db_connection.cursor()
-    customers = cursor.execute(
+    customers = app.db_connection.execute(
         "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country "
         "FROM Customers ORDER BY CustomerID").fetchall()
     return \
