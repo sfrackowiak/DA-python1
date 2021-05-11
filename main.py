@@ -17,15 +17,18 @@ async def shutdown():
 
 @app.get("/categories")
 async def categories():
-    categories = app.db_connection.execute(
+    cursor = app.db_connection.cursor()
+    categories = cursor.execute(
         "SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryID").fetchall()
     return {"categories": [{"id": x['CategoryID'], "name": x['CategoryName']} for x in categories]}
 
 
 @app.get("/customers")
 async def customers():
-    customers = app.db_connection.execute(
-        "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
+    cursor = app.db_connection.cursor()
+    customers = cursor.execute(
+        "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country "
+        "FROM Customers ORDER BY CustomerID").fetchall()
     return \
         {
             "customers": [
