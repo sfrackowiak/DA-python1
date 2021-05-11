@@ -59,7 +59,7 @@ async def products(product_id: int):
 
 
 @app.get("/employees")
-async def employees(limit: int, offset: int, order: str):
+async def employees(limit: int = None, offset: int = None, order: str = ""):
     if order not in ["first_name", "last_name", "city"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
