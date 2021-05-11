@@ -64,7 +64,7 @@ async def employees(limit: int, offset: int, order: str):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
     employees = app.db_connection.execute(
-        f"SELECT EmployeeID, LastName, FirstName, City FROM Products LIMIT :limit OFFSET :offset ORDER BY :order",
+        f"SELECT EmployeeID, LastName, FirstName, City FROM Products ORDER BY :order LIMIT :limit OFFSET :offset",
         {'limit': limit, 'offset': offset, 'order': order}).fetchall()
 
     return \
