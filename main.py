@@ -1,5 +1,5 @@
 import sqlite3
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 
 app = FastAPI()
 
@@ -46,3 +46,13 @@ async def customers():
 
     return {"customers": customers_list}
 
+
+@app.get("/products/{product_id}")
+async def products(product_id: int):
+    product = app.db_connection.execute(
+        "SELECT ProductID, ProductName FROM Products WHERE ProductID = :product_id",
+        {'product_id': product_id}).fetchone()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return product
