@@ -22,7 +22,6 @@ async def categories():
         "SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryID").fetchall()
     return {"categories": [{"id": x['CategoryID'], "name": x['CategoryName']} for x in categories]}
 
-    [{"employee": f"{x['FirstName']} {x['LastName']}", "region": x["TerritoryDescription"]} for x in data]
 
 @app.get("/customers")
 async def customers():
