@@ -72,7 +72,7 @@ async def employees(limit: int = None, offset: int = None, order: str = None):
 
     query = f"SELECT EmployeeID, LastName, FirstName, City FROM Employees"
     if order is not None:
-        query += f" ORDER BY UPPER({order})"
+        query += f" ORDER BY {order}"
     if limit is not None:
         query += f" LIMIT {limit}"
     if offset is not None:
