@@ -55,4 +55,4 @@ async def products(product_id: int):
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    return product
+    return {"id": product['ProductID'], "name": product['ProductName']}
