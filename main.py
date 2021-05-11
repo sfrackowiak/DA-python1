@@ -70,10 +70,13 @@ async def employees(limit: int, offset: int, order: str):
     else:
         order = "City"
 
+    query = f"SELECT EmployeeID, LastName, FirstName, City FROM Employees ORDER BY UPPER({order})"
+    if limit is not None:
+        query += f" LIMIT {limit}"
+    if offset is not None:
+        query += f" OFFSET {offset}"
 
-    employees = app.db_connection.execute(
-        f"SELECT EmployeeID, LastName, FirstName, City FROM Employees ORDER BY UPPER({order}) LIMIT {limit} OFFSET {offset}"
-    ).fetchall()
+    employees = app.db_connection.execute(query).fetchall()
 
     return \
         {
