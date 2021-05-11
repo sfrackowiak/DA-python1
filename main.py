@@ -59,13 +59,13 @@ async def products(product_id: int):
 
 
 @app.get("/employees")
-async def employees(limit: int, offset: int, order: str):
-    if order not in ["first_name", "last_name", "city"] or limit is None or offset is None:
+async def employees(limit: int=0, offset: int=0, order: str=""):
+    if order not in ["first_name", "last_name", "city"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
     employees = app.db_connection.execute(
-        f"SELECT EmployeeID, LastName, FirstName, City FROM Products ORDER BY :order LIMIT :limit OFFSET :offset",
-        {'limit': limit, 'offset': offset, 'order': order}).fetchall()
+        f"SELECT EmployeeID, LastName, FirstName, City FROM Products ORDER BY {order} LIMIT {limit} OFFSET {offset}"
+    ).fetchall()
 
     return \
         {
