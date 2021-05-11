@@ -27,17 +27,19 @@ async def categories():
 async def customers():
     customers = app.db_connection.execute(
         "SELECT CustomerID, CompanyName, Address, PostalCode, City, Country FROM Customers ORDER BY CustomerID").fetchall()
+    customers_list = []
     for x in customers:
-        for key in x.keys():
-            if x[key] is None:
-                x[key] = ""
-    return \
-        {
-            "customers": [
-                {
-                    "id": x['CustomerID'],
-                    "name": x['CompanyName'],
-                    "full_address": f"{x['Address']} {x['PostalCode']} {x['City']} {x['Country']}"
-                }
-                for x in customers]
-        }
+        customer_addr = ""
+        if x['Address'] is not None:
+            customer_addr += x['Address'] + " "
+        if x['PostalCode'] is not None:
+            customer_addr += x['PostalCode'] + " "
+        if x['City'] is not None:
+            customer_addr += x['City'] + " "
+        if x['Country'] is not None:
+            customer_addr += x['Country']
+        customer = {"id": x['CustomerID'], "name": x['CompanyName'], "full_address": customer_addr}
+        customers_list.append(customer)
+
+    return {"customers": customers_list}
+
