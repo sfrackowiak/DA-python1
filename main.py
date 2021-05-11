@@ -8,6 +8,7 @@ app = FastAPI()
 async def startup():
     app.db_connection = sqlite3.connect("northwind.db")
     app.db_connection.text_factory = lambda b: b.decode(errors="ignore")  # northwind specific
+    app.db_connection.row_factory = sqlite3.Row
 
 
 @app.on_event("shutdown")
@@ -21,6 +22,7 @@ async def categories():
         "SELECT CategoryID, CategoryName FROM Categories ORDER BY CategoryID").fetchall()
     return {"categories": [{"id": x['CategoryID'], "name": x['CategoryName']} for x in categories]}
 
+    [{"employee": f"{x['FirstName']} {x['LastName']}", "region": x["TerritoryDescription"]} for x in data]
 
 @app.get("/customers")
 async def customers():
