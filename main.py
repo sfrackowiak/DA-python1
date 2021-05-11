@@ -56,3 +56,27 @@ async def products(product_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     return {"id": product['ProductID'], "name": product['ProductName']}
+
+
+@app.get("/employees")
+async def employees(limit: int, offset: int, order: str):
+    if order not in ["first_name", "last_name", "city"] or limit is None or offset is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+
+    employees = app.db_connection.execute(
+        f"SELECT EmployeeID, LastName, FirstName, City FROM Products LIMIT :limit OFFSET :offset",
+        {'limit': limit, 'offset': offset}).fetchall()
+
+    return \
+        {
+            "products_extended":
+                [
+                    {
+                        "id": x['EmployeeID'],
+                        "last_name": x['LastName'],
+                        "first_name": x['FirstName'],
+                        "city": x['City']
+                    }
+                    for x in employees
+                ]
+        }
