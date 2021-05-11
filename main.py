@@ -72,7 +72,7 @@ async def employees(limit: int=0, offset: int=0, order: str=""):
 
 
     employees = app.db_connection.execute(
-        f"SELECT EmployeeID, LastName, FirstName, City FROM Employees ORDER BY {order} LIMIT {limit} OFFSET {offset}"
+        f"SELECT EmployeeID, LastName, FirstName, City FROM Employees ORDER BY UPPER({order}) LIMIT {limit} OFFSET {offset}"
     ).fetchall()
 
     return \
